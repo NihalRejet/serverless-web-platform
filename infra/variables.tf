@@ -1,19 +1,22 @@
 variable "project_name" {
-  type    = string
-  default = "swp"
+  type        = string
+  description = "Short prefix applied to every resource name"
+  default     = "swp"
 }
 
 variable "aws_region" {
-  type    = string
-  default = "ap-south-1"
+  type        = string
+  description = "AWS region for all regional resources"
+  default     = "ap-south-1"
 }
 
 variable "alert_email" {
   type        = string
-  description = "Email address for CloudWatch alarms"
+  description = "Email address that receives CloudWatch alarm notifications"
 }
 
 variable "image_tag" {
-  type    = string
-  default = "bootstrap"
+  type        = string
+  description = "ECR image tag the Lambda runs. CI passes the commit SHA."
+  default     = "bootstrap"
 }
