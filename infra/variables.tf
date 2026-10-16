@@ -13,6 +13,7 @@ variable "aws_region" {
 variable "alert_email" {
   type        = string
   description = "Email address that receives CloudWatch alarm notifications"
+  default     = "nihalrejeti@gmail.com"
 }
 
 variable "image_tag" {

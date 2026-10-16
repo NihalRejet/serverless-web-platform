@@ -142,12 +142,6 @@ resource "aws_cloudfront_origin_access_control" "site_oac" {
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 
-  # Changing an OAC name forces a replacement. The distribution still points
-  # at the old one during that swap, so the new OAC must exist first or the
-  # delete fails with "origin access control is in use".
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
