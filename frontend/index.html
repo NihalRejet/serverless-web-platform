@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serverless Web Platform</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #15191e;
+    --muted: #6b7280;
+    --border: #e4e7eb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --surface: #171a21;
+      --text: #e8eaed;
+      --muted: #9aa3af;
+      --border: #272b33;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 40px 32px;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin: 0 0 32px;
+  }
+
+  .count {
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .count.loading,
+  .count.error {
+    font-size: 1.375rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .label {
+    color: var(--muted);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 10px 0 0;
+  }
+
+  .stack {
+    margin: 32px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    line-height: 1.9;
+  }
+
+  @media (max-width: 420px) {
+    .card { padding: 32px 20px; }
+    .count { font-size: 2.75rem; }
+    .stack { font-size: 0.6875rem; }
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Serverless Web Platform</h1>
+    <p class="subtitle">Provisioned with Terraform. Deployed by GitHub Actions.</p>
+
+    <p id="count" class="count loading" aria-live="polite">Loading&hellip;</p>
+    <p class="label">Total visits</p>
+
+    <p class="stack">
+      CloudFront &rarr; S3<br>
+      API Gateway &rarr; Lambda &rarr; DynamoDB
+    </p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
