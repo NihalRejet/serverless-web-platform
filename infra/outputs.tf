@@ -17,3 +17,13 @@ output "site_url" {
   description = "The full HTTPS URL of the CloudFront distribution"
   value       = "https://${aws_cloudfront_distribution.site_distribution.domain_name}"
 }
+
+output "ecr_repository_url" {
+  description = "The URL of the ECR repository"
+  value       = aws_ecr_repository.swp_counter_ecr.repository_url
+}
+
+output "lambda_url" {
+  description = "The public URL of the Lambda function"
+  value       = aws_lambda_function_url.swp_counter_url.function_url
+}
