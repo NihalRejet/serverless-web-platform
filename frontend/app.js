@@ -6,7 +6,7 @@
 // It looks like: https://a1b2c3d4e5.execute-api.ap-south-1.amazonaws.com
 // Until then the page shows the error state, which is expected.
 // ---------------------------------------------------------------------------
-const API_BASE = "https://REPLACE-ME.execute-api.ap-south-1.amazonaws.com";
+const API_BASE = "https://h7xmrodgl0.execute-api.ap-south-1.amazonaws.com";
 
 // The Lambda must answer GET /count with JSON shaped like: { "count": 42 }
 const COUNT_PATH = "/count";
