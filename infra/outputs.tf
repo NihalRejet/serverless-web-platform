@@ -32,3 +32,8 @@ output "api_endpoint" {
   description = "The HTTP API URL"
   value       = aws_apigatewayv2_api.swp-api.api_endpoint
 }
+
+output "github_role_arn" {
+  description = "The ARN of the IAM role for GitHub Actions"
+  value       = aws_iam_role.github_actions_role.arn
+}

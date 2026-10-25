@@ -21,3 +21,9 @@ variable "image_tag" {
   description = "ECR image tag the Lambda runs. CI passes the commit SHA."
   default     = "bootstrap"
 }
+
+variable "github_repo" {
+  type        = string
+  description = "GitHub repository in the format <owner>/<repo>"
+  default     = "NihalRejet/serverless-web-platform"
+}
