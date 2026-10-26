@@ -29,6 +29,9 @@ resource "aws_s3_bucket_public_access_block" "site_bucket" {
 
 # S3 applies SSE-S3 to new buckets by default. Declaring it keeps the setting
 # visible in code and stops IaC scanners flagging an implicit default.
+# Accepted (Trivy AWS-0132): a customer-managed KMS key adds monthly cost and
+# key-policy work for OAC. The bucket is still encrypted with AWS-managed keys.
+#trivy:ignore:AWS-0132
 resource "aws_s3_bucket_server_side_encryption_configuration" "site_bucket" {
   bucket = aws_s3_bucket.site_bucket.id
 
@@ -93,6 +96,9 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
+# Accepted (Trivy AWS-0132): SSE-KMS is not supported for log delivery
+# destination buckets, so SSE-S3 (AES256) is the correct choice here.
+#trivy:ignore:AWS-0132
 resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
   bucket = aws_s3_bucket.logs.id
 
@@ -171,6 +177,9 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
   }
 }
 
+# Accepted (Trivy AWS-0011): a WAF is billed monthly and is outside the free
+# tier. Mitigated by a private bucket (OAC only) and a security headers policy.
+#trivy:ignore:AWS-0011
 resource "aws_cloudfront_distribution" "site_distribution" {
   enabled             = true
   default_root_object = "index.html"

@@ -21,10 +21,22 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
 
-      - name: Build and push image
-        run: |
-          docker build --provenance=false -t $REG/swp-counter:${{ github.sha }} ./app
-          docker push $REG/swp-counter:${{ github.sha }}
+      - name: Build image
+        run: docker build --provenance=false -t $REG/swp-counter:${{ github.sha }} ./app
+        env:
+          REG: ${{ steps.ecr.outputs.registry }}
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.ecr.outputs.registry }}/swp-counter:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+
+      - name: Push image
+        run: docker push $REG/swp-counter:${{ github.sha }}
         env:
           REG: ${{ steps.ecr.outputs.registry }}
 
