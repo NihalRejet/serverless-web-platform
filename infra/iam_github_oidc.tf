@@ -28,7 +28,10 @@ data "aws_iam_policy_document" "github_policy" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:NihalRejet@145046577/serverless-web-platform@1416685364:pull_request"]
+      values = [
+        "repo:NihalRejet@145046577/serverless-web-platform@1416685364:pull_request",
+        "repo:NihalRejet@145046577/serverless-web-platform@1416685364:ref:refs/heads/main",
+      ]
     }
   }
 }
