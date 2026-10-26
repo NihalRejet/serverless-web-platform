@@ -1,0 +1,4 @@
+   # aws-lambda-rie is AWS's local-testing emulator in the base image.
+   # It is not executed by the Lambda service, and a dnf upgrade cannot patch it.
+   # Revisit when AWS publishes a new base image.
+   CVE-2026-111943

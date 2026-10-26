@@ -42,6 +42,16 @@ jobs:
         run: terraform validate -no-color
         continue-on-error: true
 
+      - name: Trivy IaC scan
+        id: trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra/
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+        continue-on-error: true
+
       - name: Terraform plan
         id: plan
         run: terraform plan -no-color -input=false -lock=false -var="image_tag=${{ github.event.pull_request.head.sha }}"
@@ -63,6 +73,7 @@ jobs:
               `- fmt: \`${{ steps.fmt.outcome }}\``,
               `- init: \`${{ steps.init.outcome }}\``,
               `- validate: \`${{ steps.validate.outcome }}\``,
+              `- trivy: \`${{ steps.trivy.outcome }}\``,
               `- plan: \`${{ steps.plan.outcome }}\``,
               "",
               "<details><summary>Show plan</summary>",
@@ -81,5 +92,5 @@ jobs:
             });
 
       - name: Fail the job if any check failed
-        if: steps.fmt.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.plan.outcome == 'failure'
+        if: steps.fmt.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.plan.outcome == 'failure' || steps.trivy.outcome == 'failure'
         run: exit 1
