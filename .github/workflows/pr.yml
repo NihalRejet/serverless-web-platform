@@ -1,0 +1,85 @@
+name: pr
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write # lets GitHub issue the OIDC token (needed to assume the AWS role)
+  contents: read # lets the job read the repo
+  pull-requests: write # lets the job post the plan comment
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.5" # match `terraform version` on your laptop
+          terraform_wrapper: true # needed so steps.<id>.outputs.stdout exists
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate -no-color
+        continue-on-error: true
+
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -no-color -input=false -lock=false -var="image_tag=${{ github.event.pull_request.head.sha }}"
+        continue-on-error: true
+
+      - name: Post plan to the PR
+        uses: actions/github-script@v7
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}
+        with:
+          script: |
+            let plan = process.env.PLAN || "(no output)";
+            if (plan.length > 60000) {
+              plan = plan.slice(0, 60000) + "\n\n... output truncated ...";
+            }
+            const body = [
+              "### Terraform checks",
+              "",
+              `- fmt: \`${{ steps.fmt.outcome }}\``,
+              `- init: \`${{ steps.init.outcome }}\``,
+              `- validate: \`${{ steps.validate.outcome }}\``,
+              `- plan: \`${{ steps.plan.outcome }}\``,
+              "",
+              "<details><summary>Show plan</summary>",
+              "",
+              "```",
+              plan,
+              "```",
+              "",
+              "</details>",
+            ].join("\n");
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+      - name: Fail the job if any check failed
+        if: steps.fmt.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.plan.outcome == 'failure'
+        run: exit 1

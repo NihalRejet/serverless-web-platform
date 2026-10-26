@@ -1,0 +1,51 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+
+      - name: Build and push image
+        run: |
+          docker build --provenance=false -t $REG/swp-counter:${{ github.sha }} ./app
+          docker push $REG/swp-counter:${{ github.sha }}
+        env:
+          REG: ${{ steps.ecr.outputs.registry }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.0"
+          terraform_wrapper: false
+
+      - name: Terraform apply
+        working-directory: infra
+
+        run: |
+          terraform init
+          terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
+
+      - name: Sync frontend
+        run: aws s3 sync ./frontend s3://$(terraform -chdir=infra output -raw bucket_name)/ --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id $(terraform -chdir=infra output -raw distribution_id) \
+            --paths "/*"
