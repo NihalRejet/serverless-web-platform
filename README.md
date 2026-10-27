@@ -240,6 +240,14 @@ terraform output -raw github_role_arn
 
 Also change `alert_email` in `infra/variables.tf` to your own address, and confirm the SNS subscription email that AWS sends you.
 
+**4. Point the frontend at your own API.** The API URL is written in `frontend/app.js` (`API_BASE`). After the first `terraform apply`, get your own URL and put it there:
+
+```bash
+terraform output -raw api_endpoint
+```
+
+Bucket names get a random suffix (`swp-site-<random>`), so they won't clash with anyone else's.
+
 From then on, every change goes through a pull request, and the pipeline does all deploys. Don't run `terraform apply` locally after this: the `image_tag` variable defaults to `bootstrap`, so a local apply would point the Lambda back at the first image.
 
 ---
