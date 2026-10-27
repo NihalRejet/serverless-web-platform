@@ -1,4 +1,4 @@
-resource "aws_budgets_budget" "" {
+resource "aws_budgets_budget" "swp_monthly_cap_budget" {
   name         = "swp-monthly-cap"
   budget_type  = "COST"
   limit_amount = "5"
