@@ -49,8 +49,8 @@ resource "aws_lambda_function" "swp_counter" {
 
   package_type = "Image"
 
-  # Points to the bootstrap image you pushed in Task 5.4
-  image_uri = "${aws_ecr_repository.swp_counter_ecr.repository_url}:bootstrap"
+  # Tag comes from the pipeline: every deploy uses the image built from that commit
+  image_uri = "${aws_ecr_repository.swp_counter_ecr.repository_url}:${var.image_tag}"
 
   # Passes the table name to your app.py script
   environment {
