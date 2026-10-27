@@ -4,8 +4,13 @@ on:
     branches: [main]
 
 permissions:
-  id-token: write
-  contents: read
+  id-token: write # lets GitHub issue the OIDC token (needed to assume the AWS role)
+  contents: read # lets the job read the repo
+
+# Never run two deploys at once: the second one waits for the first to finish.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -21,11 +26,14 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
 
+      # Tagged with the commit SHA, so every deploy traces back to one commit.
+      # --provenance=false: Lambda rejects images with build attestations.
       - name: Build image
         run: docker build --provenance=false -t $REG/swp-counter:${{ github.sha }} ./app
         env:
           REG: ${{ steps.ecr.outputs.registry }}
 
+      # Scan before push: an image with HIGH or CRITICAL findings never reaches ECR.
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -43,15 +51,15 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.16.5"
-          terraform_wrapper: false
+          terraform_version: "1.16.5" # same version as pr.yml
+          terraform_wrapper: false # keeps `terraform output -raw` clean for the steps below
 
+      # Points the Lambda at the image just pushed.
       - name: Terraform apply
         working-directory: infra
-
         run: |
-          terraform init
-          terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
+          terraform init -input=false
+          terraform apply -auto-approve -input=false -var="image_tag=${{ github.sha }}"
 
       - name: Sync frontend
         run: aws s3 sync ./frontend s3://$(terraform -chdir=infra output -raw bucket_name)/ --delete

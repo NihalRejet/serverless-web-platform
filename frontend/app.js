@@ -1,11 +1,5 @@
-// ---------------------------------------------------------------------------
-// STAGE 7 TODO: replace API_BASE with the real API Gateway endpoint.
-//
-//   cd infra && terraform output -raw api_endpoint
-//
-// It looks like: https://a1b2c3d4e5.execute-api.ap-south-1.amazonaws.com
-// Until then the page shows the error state, which is expected.
-// ---------------------------------------------------------------------------
+// API Gateway endpoint, from: terraform -chdir=infra output -raw api_endpoint
+// Hard-coded for now; injecting it at deploy time is listed as a next step.
 const API_BASE = "https://h7xmrodgl0.execute-api.ap-south-1.amazonaws.com";
 
 // The Lambda must answer GET /count with JSON shaped like: { "count": 42 }

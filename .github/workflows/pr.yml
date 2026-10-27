@@ -9,6 +9,11 @@ permissions:
   contents: read # lets the job read the repo
   pull-requests: write # lets the job post the plan comment
 
+# A new push to the same PR cancels the run that is still in progress.
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -20,7 +25,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.16.5" # match `terraform version` on your laptop
+          terraform_version: "1.16.5" # same version as deploy.yml
           terraform_wrapper: true # needed so steps.<id>.outputs.stdout exists
 
       - uses: aws-actions/configure-aws-credentials@v4
@@ -33,9 +38,12 @@ jobs:
         run: terraform fmt -check -recursive
         continue-on-error: true
 
+      # Every check uses continue-on-error, so all of them run and the PR comment
+      # shows the full picture. The last step fails the job if any of them failed.
       - name: Terraform init
         id: init
         run: terraform init -input=false
+        continue-on-error: true
 
       - name: Terraform validate
         id: validate
@@ -54,6 +62,8 @@ jobs:
 
       - name: Terraform plan
         id: plan
+        # Read-only, so no state lock. The PR's commit SHA stands in for the image
+        # tag, which is why every plan shows the Lambda image changing.
         run: terraform plan -no-color -input=false -lock=false -var="image_tag=${{ github.event.pull_request.head.sha }}"
         continue-on-error: true
 
@@ -92,5 +102,5 @@ jobs:
             });
 
       - name: Fail the job if any check failed
-        if: steps.fmt.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.plan.outcome == 'failure' || steps.trivy.outcome == 'failure'
+        if: steps.fmt.outcome == 'failure' || steps.init.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.trivy.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1

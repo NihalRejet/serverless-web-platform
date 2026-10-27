@@ -11,7 +11,8 @@ table = dynamodb.Table(TABLE_NAME)
 
 def lambda_handler(event, context):
     try:
-        # Atomic update: Adds 1 to the count, creating the attribute at 0 if missing
+        # Atomic update: adds 1 in a single call, so two visits at the same time
+        # can't overwrite each other. If the item doesn't exist yet, it starts at 0.
         response = table.update_item(
             Key={
                 'id': 'visits'
@@ -26,7 +27,7 @@ def lambda_handler(event, context):
         # DynamoDB returns numbers as a Decimal type. Cast it to an int so json.dumps works.
         visit_count = int(response['Attributes']['visits'])
 
-        # Return the exact dictionary format required by API Gateway
+        # Response shape for an API Gateway proxy integration
         return {
             "statusCode": 200,
             "headers": {
@@ -38,4 +39,6 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print(f"Error: {e}")
+        # Re-raise so Lambda records a failed invocation. Returning a 500 here
+        # would count as a success, and the CloudWatch Errors alarm would never fire.
         raise

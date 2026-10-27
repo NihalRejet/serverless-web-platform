@@ -1,5 +1,7 @@
 # Serverless Web Platform on AWS
 
+[![deploy](https://github.com/NihalRejet/serverless-web-platform/actions/workflows/deploy.yml/badge.svg)](https://github.com/NihalRejet/serverless-web-platform/actions/workflows/deploy.yml)
+
 A static website with a live visitor counter, built on serverless AWS services. All of it is defined in Terraform and deployed by a GitHub Actions pipeline with no stored AWS keys.
 
 **Live site:** https://d285acfpj92rpu.cloudfront.net
@@ -121,7 +123,7 @@ Each deploy maps to exactly one commit. To roll back, I revert the PR, and the p
 
 - **Private S3 bucket.** Public access is blocked. The bucket policy allows only `s3:GetObject`, and only for this CloudFront distribution (checked with `AWS:SourceArn`).
 - **No AWS keys in GitHub.** The pipeline gets temporary credentials through OIDC. The only secret, `AWS_ROLE_ARN`, is an identifier, not a credential.
-- **Tight OIDC trust policy.** The role can only be assumed by this repository, and only from pull requests or the `main` branch.
+- **Tight OIDC trust policy.** The role can only be assumed by this repository, and only from pull requests or the `main` branch (exact `StringEquals` match, no wildcards).
 - **Least privilege for the Lambda.** It may only call `dynamodb:UpdateItem` on its own table, plus write its own logs.
 - **API Gateway permission is scoped** to this API's ARN, so no other API can invoke the function.
 - **Encryption.** Terraform state is encrypted in S3. The site and log buckets use SSE-S3, and DynamoDB is encrypted at rest by default.
@@ -153,7 +155,7 @@ The Lambda's `image_uri` was hard-coded to the first `bootstrap` tag. Every depl
 The handler caught every exception and returned a clean `500`. To the Lambda service, that is a successful run, so the `Errors` metric stayed at zero. I changed the handler to log the error and re-raise it.
 
 **3. The OIDC role refused GitHub.**
-GitHub changed its OIDC subject format for repositories created after July 2026: it now includes numeric owner and repository IDs. My trust policy used the old format. I printed the token's `sub` claim in a temporary workflow step and updated the policy. A later failure on `main` showed I had allowed only pull requests, so I listed the two exact subjects instead of a wildcard.
+GitHub changed its OIDC subject format for repositories created after July 2026: it now includes numeric owner and repository IDs. My trust policy used the old format. I printed the token's `sub` claim in a temporary workflow step and updated the policy. A later failure on `main` showed I had allowed only pull requests, so the policy now lists the two exact subjects, with no wildcard.
 
 **4. `dnf update` patched nothing.**
 Trivy reported 43 HIGH findings in the base image's system packages, all with fixes available. Amazon Linux 2023 locks packages to the image's release version, so a plain update said "nothing to do". Using `dnf upgrade --releasever=latest` brought the OS findings to zero.
@@ -244,7 +246,7 @@ From then on, every change goes through a pull request, and the pipeline does al
 
 ## Cost
 
-The bill for October 2026 was **$0.00**. Everything runs inside AWS free tier limits:
+As of late October 2026, the bill for the month is **$0.00**. Everything runs inside AWS free tier limits:
 
 | Service | Free tier | Usage this month |
 |---|---|---|

@@ -6,12 +6,16 @@ resource "aws_sns_topic" "swp_alerts" {
   name = "swp-alerts"
 }
 
+# Email subscriptions must be confirmed from the email AWS sends; until then
+# nothing is delivered, even though Terraform reports success.
 resource "aws_sns_topic_subscription" "email" {
   topic_arn = aws_sns_topic.swp_alerts.arn
   protocol  = "email"
   endpoint  = var.alert_email
 }
 
+# Fires when the function fails (unhandled error or timeout) and emails the
+# topic. ok_actions sends a second email when it recovers.
 resource "aws_cloudwatch_metric_alarm" "swp_lambda_errors" {
   alarm_name          = "swp-lambda-errors"
   comparison_operator = "GreaterThanOrEqualToThreshold"
@@ -21,7 +25,7 @@ resource "aws_cloudwatch_metric_alarm" "swp_lambda_errors" {
   period              = 60
   statistic           = "Sum"
   threshold           = 1
-  alarm_description   = "This metric monitors lambda function errors"
+  alarm_description   = "swp-counter had 1 or more errors in a 1-minute window"
   alarm_actions       = [aws_sns_topic.swp_alerts.arn]
   dimensions = {
     FunctionName = aws_lambda_function.swp_counter.function_name
@@ -30,13 +34,8 @@ resource "aws_cloudwatch_metric_alarm" "swp_lambda_errors" {
   ok_actions         = [aws_sns_topic.swp_alerts.arn]
 }
 
-# The log group already exists (Lambda created it on first run). This block
-# tells Terraform to adopt it instead of failing with "already exists".
-import {
-  to = aws_cloudwatch_log_group.swp_counter
-  id = "/aws/lambda/swp-counter"
-}
-
+# Lambda's log group. Without this, Lambda creates it with no expiry and logs
+# are kept forever. (It was adopted into Terraform once with an import block.)
 resource "aws_cloudwatch_log_group" "swp_counter" {
   name              = "/aws/lambda/${aws_lambda_function.swp_counter.function_name}"
   retention_in_days = 14
