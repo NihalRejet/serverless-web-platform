@@ -29,3 +29,15 @@ resource "aws_cloudwatch_metric_alarm" "swp_lambda_errors" {
   treat_missing_data = "notBreaching"
   ok_actions         = [aws_sns_topic.swp_alerts.arn]
 }
+
+# The log group already exists (Lambda created it on first run). This block
+# tells Terraform to adopt it instead of failing with "already exists".
+import {
+  to = aws_cloudwatch_log_group.swp_counter
+  id = "/aws/lambda/swp-counter"
+}
+
+resource "aws_cloudwatch_log_group" "swp_counter" {
+  name              = "/aws/lambda/${aws_lambda_function.swp_counter.function_name}"
+  retention_in_days = 14
+}
