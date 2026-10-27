@@ -5,13 +5,6 @@ resource "aws_budgets_budget" "swp_monthly_cap_budget" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
-  cost_filter {
-    name = "Service"
-    values = [
-      "Amazon Elastic Compute Cloud - Compute",
-    ]
-  }
-
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 80
