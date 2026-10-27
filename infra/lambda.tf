@@ -59,17 +59,3 @@ resource "aws_lambda_function" "swp_counter" {
     }
   }
 }
-
-resource "aws_lambda_function_url" "swp_counter_url" {
-  function_name = aws_lambda_function.swp_counter.function_name
-
-  # "NONE" means anyone on the internet can hit this URL without needing AWS credentials
-  authorization_type = "NONE"
-
-  cors {
-    # Allows any website to make a request to this URL
-    allow_origins = ["*"]
-    # Allows standard web request methods
-    allow_methods = ["GET", "POST"]
-  }
-}

@@ -23,11 +23,6 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.swp_counter_ecr.repository_url
 }
 
-output "lambda_url" {
-  description = "The public URL of the Lambda function"
-  value       = aws_lambda_function_url.swp_counter_url.function_url
-}
-
 output "api_endpoint" {
   description = "The HTTP API URL"
   value       = aws_apigatewayv2_api.swp-api.api_endpoint
