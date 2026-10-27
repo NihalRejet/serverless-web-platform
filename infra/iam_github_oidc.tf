@@ -1,3 +1,5 @@
+# Lets GitHub Actions get short-lived AWS credentials through OIDC, so no AWS
+# access keys are stored in GitHub.
 resource "aws_iam_openid_connect_provider" "github_oidc" {
   url = "https://token.actions.githubusercontent.com"
 
@@ -5,6 +7,8 @@ resource "aws_iam_openid_connect_provider" "github_oidc" {
     "sts.amazonaws.com",
   ]
 
+  # Required by the provider schema. AWS now validates GitHub's certificate
+  # itself, so this value is not used for trust decisions.
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
@@ -16,7 +20,7 @@ data "aws_iam_policy_document" "github_policy" {
 
     principals {
       type        = "Federated"
-      identifiers = ["${aws_iam_openid_connect_provider.github_oidc.arn}"]
+      identifiers = [aws_iam_openid_connect_provider.github_oidc.arn]
     }
 
     condition {
@@ -25,8 +29,11 @@ data "aws_iam_policy_document" "github_policy" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Only this repository, and only pull requests or the main branch.
+    # Repositories created after July 2026 use GitHub's immutable subject
+    # format, which includes the owner and repository IDs.
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:NihalRejet@145046577/serverless-web-platform@1416685364:pull_request",
@@ -41,6 +48,8 @@ resource "aws_iam_role" "github_actions_role" {
   assume_role_policy = data.aws_iam_policy_document.github_policy.json
 }
 
+# Known limitation: broader than the pipeline needs. Narrowing this to the
+# exact actions Terraform and the deploy steps use is the next hardening step.
 resource "aws_iam_role_policy_attachment" "github_actions_role_policy" {
   role       = aws_iam_role.github_actions_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"

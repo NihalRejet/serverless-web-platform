@@ -25,7 +25,7 @@ output "ecr_repository_url" {
 
 output "api_endpoint" {
   description = "The HTTP API URL"
-  value       = aws_apigatewayv2_api.swp-api.api_endpoint
+  value       = aws_apigatewayv2_api.swp_api.api_endpoint
 }
 
 output "github_role_arn" {
