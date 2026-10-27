@@ -10,6 +10,7 @@ TABLE_NAME = os.environ.get('TABLE_NAME')
 table = dynamodb.Table(TABLE_NAME)
 
 def lambda_handler(event, context):
+    raise RuntimeError("deliberate failure to test the alarm")
     try:
         # Atomic update: Adds 1 to the count, creating the attribute at 0 if missing
         response = table.update_item(
@@ -39,3 +40,4 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error: {e}")
         raise
+
